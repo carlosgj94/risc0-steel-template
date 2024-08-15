@@ -31,15 +31,20 @@ cargo build
 
 # Deploy the Counter contract
 echo "Deploying the Counter contract..."
-forge script --rpc-url http://localhost:8545 --broadcast script/DeployCounter.s.sol
+forge script --rpc-url $RPC_URL --broadcast script/DeployCounter.s.sol
 
 # Extract the Toyken address
 export TOYKEN_ADDRESS=$(jq -re '.transactions[] | select(.contractName == "ERC20") | .contractAddress' ./broadcast/DeployCounter.s.sol/31337/run-latest.json)
 echo "ERC20 Toyken Address: $TOYKEN_ADDRESS"
 
+
 # Mint Toyken to a specific address
 echo "Minting Toyken to 0x9737100D2F42a196DE56ED0d1f6fF598a250E7E4..."
-cast send --private-key $ETH_WALLET_PRIVATE_KEY --rpc-url http://localhost:8545 $TOYKEN_ADDRESS 'mint(address, uint256)' 0x9737100D2F42a196DE56ED0d1f6fF598a250E7E4 100
+cast send --private-key $ETH_WALLET_PRIVATE_KEY --rpc-url ${RPC_URL} $TOYKEN_ADDRESS 'mint(address, uint256)' 0x9737100D2F42a196DE56ED0d1f6fF598a250E7E4 100
+
+# Get the initial block number
+export INITIAL_BLOCK_NUMBER=$(cast block-number --rpc-url ${RPC_URL})
+echo "Initial block number: $INITIAL_BLOCK_NUMBER"
 
 # Extract the Counter contract address
 export COUNTER_ADDRESS=$(jq -re '.transactions[] | select(.contractName == "Counter") | .contractAddress' ./broadcast/DeployCounter.s.sol/31337/run-latest.json)
@@ -49,14 +54,15 @@ echo "Counter Address: $COUNTER_ADDRESS"
 echo "Publishing a new state..."
 cargo run --bin publisher -- \
     --chain-id=31337 \
-    --rpc-url=http://localhost:8545 \
+    --rpc-url=${RPC_URL} \
+    --block-number=${INITIAL_BLOCK_NUMBER:?} \
     --contract=${COUNTER_ADDRESS:?} \
     --token=${TOYKEN_ADDRESS:?} \
     --account=0x9737100D2F42a196DE56ED0d1f6fF598a250E7E4
 
 # Attempt to verify counter value as part of the script logic
 echo "Verifying state..."
-COUNTER_VALUE=$(cast call --rpc-url http://localhost:8545 ${COUNTER_ADDRESS:?} 'get()(uint256)')
+COUNTER_VALUE=$(cast call --rpc-url ${RPC_URL} ${COUNTER_ADDRESS:?} 'get()(uint256)')
 if [ "$COUNTER_VALUE" != "1" ]; then
     echo "Counter value is not 1 as expected, but $COUNTER_VALUE."
     exit 1

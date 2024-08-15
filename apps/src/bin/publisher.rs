@@ -53,6 +53,10 @@ struct Args {
     #[clap(long, env)]
     rpc_url: String,
 
+    /// Ethereum block number.
+    #[clap(long)]
+    block_number: Option<u64>,
+
     /// Counter's contract address on Ethereum
     #[clap(long)]
     contract: Address,
@@ -77,7 +81,7 @@ fn main() -> Result<()> {
 
     // Create an EVM environment from an RPC endpoint and a block number. If no block number is
     // provided, the latest block is used.
-    let mut env = EthEvmEnv::from_rpc(&args.rpc_url, None)?;
+    let mut env = EthEvmEnv::from_rpc(&args.rpc_url, args.block_number)?;
     //  The `with_chain_spec` method is used to specify the chain configuration.
     env = env.with_chain_spec(&ETH_SEPOLIA_CHAIN_SPEC);
 

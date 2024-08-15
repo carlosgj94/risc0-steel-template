@@ -15,7 +15,7 @@
 #![allow(unused_doc_comments)]
 #![no_main]
 
-use alloy_primitives::{Address, U256};
+use alloy_primitives::{fixed_bytes, Address, U256};
 use alloy_sol_types::{sol, SolValue};
 use risc0_steel::{config::ETH_SEPOLIA_CHAIN_SPEC, ethereum::EthEvmInput, Contract, SolCommitment};
 use risc0_zkvm::guest::env;

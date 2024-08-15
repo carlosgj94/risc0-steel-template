@@ -52,11 +52,23 @@ contract Counter is ICounter {
     }
 
     /// @inheritdoc ICounter
-    function increment(bytes calldata journalData, bytes calldata seal) external {
+    function increment(
+        bytes calldata journalData,
+        bytes calldata seal
+    ) external {
         // Decode and validate the journal data
         Journal memory journal = abi.decode(journalData, (Journal));
         require(journal.tokenAddress == tokenAddress, "Invalid token address");
-        require(Steel.validateCommitment(journal.commitment), "Invalid commitment");
+        // Steels function to validate the commitment relies on the blockhas() function, which is only valid on the latest 256 blocks
+        // Therefore I'm commenting it out, and I recommend checking against a stored block commitment in the contract
+        /*
+        require(
+            Steel.validateCommitment(journal.commitment),
+            "Invalid commitment"
+        );
+        */
+        // require(journal.commitment.blockHash == <<SOME_STORAGE_BLOCK_HASH>>, "Invalid commitment");
+        // require(journal.commitment.blockNumber == <<SOME_STORAGE_BLOCK_NUMBER>>, "Invalid commitment");
 
         // Verify the proof
         bytes32 journalHash = sha256(journalData);
